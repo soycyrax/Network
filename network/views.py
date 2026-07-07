@@ -3,12 +3,17 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
 
-from .models import User
-
+from .models import User, Post
 
 def index(request):
-    return render(request, "network/index.html")
+    posts = Post.objects.filter(is_active=True)
+    
+    return render(request, "network/index.html", {
+        "posts": posts
+    })
 
 
 def login_view(request):
@@ -61,3 +66,26 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+    
+
+@login_required
+def create_post(request):
+    if request.method == "POST":
+        post = request.POST.get("newpost", "").strip()
+
+        if not post:
+            return render(request, "network/index.html", {
+                "error": "Post cannot be empty."
+            })
+        
+        post1 = Post.objects.create(
+            post=post,
+            created_by=request.user
+        )
+
+        return redirect("index")
+    
+    return redirect("index")    
+    
+
+    
