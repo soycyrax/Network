@@ -9,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import User, Post
 
 def index(request):
-    posts = Post.objects.filter(is_active=True)
+    posts = Post.objects.filter(is_active=True).order_by('-created_at')
     
     return render(request, "network/index.html", {
         "posts": posts
