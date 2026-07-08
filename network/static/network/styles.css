@@ -12,3 +12,8 @@
     margin: 60px;
 }
 
+.container1 {
+    display: flex; /* or display: grid */
+    gap: 8px;     /* Sets 20px of space between all items */
+}
+

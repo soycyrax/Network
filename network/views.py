@@ -86,6 +86,15 @@ def create_post(request):
         return redirect("index")
     
     return redirect("index")    
+
+@login_required
+def profile_page(request):
+
+    user = request.user
+
+    return render(request, "network/profile.html", {
+        "user":user
+    })
     
 
     

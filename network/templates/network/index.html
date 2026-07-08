@@ -27,7 +27,10 @@
     {% for post in posts %}
     <div class="container">
         <h3 class="mb-4">{{ post.created_by }}</h3>
-        <p>{{ post.post }}</p>
+        <p class="mb-4">{{ post.post }}</p>
+        <div class="container1">
+                <div>0 Likes <button class="btn btn-sm btn-outline-primary" id="like">Like</button></div>
+        </div>
         <small>{{ post.created_at }}</small>
     </div>
     {% endfor %}
