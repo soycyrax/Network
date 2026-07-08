@@ -88,13 +88,13 @@ def create_post(request):
     return redirect("index")    
 
 @login_required
-def profile_page(request):
-
-    user = request.user
+def profile_page(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    posts = Post.objects.filter(created_by=profile_user).order_by("-created_at")
 
     return render(request, "network/profile.html", {
-        "user":user
+        "profile_user": profile_user,
+        "posts": posts
     })
-    
 
     

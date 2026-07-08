@@ -2,6 +2,25 @@
 
 {% block body %}
 
-    <h1>{{ user }}</h1>
+    <div class="container">
+        <h1 class="mb-3">{{ profile_user }}</h1>
+        <div class="container1">
+            <div><strong>0</strong> Followers</div>
+            <div><strong>0</strong> Following</div>
+        </div>
+    </div>
+
+    {% for post in posts %}
+    <div class="container">
+        <h3 class="mb-4">{{ post.created_by }}</h3>
+        <p class="mb-4">{{ post.post }}</p>
+        <div class="container1">
+                <div>0 Likes <button class="btn btn-sm btn-outline-primary" id="like">Like</button></div>
+        </div>
+        <small>{{ post.created_at }}</small>
+
+    </div>
+    {% endfor %}
+   
 
 {% endblock %}
