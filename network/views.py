@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 
 from .models import User, Post
 
@@ -74,9 +75,8 @@ def create_post(request):
         post = request.POST.get("newpost", "").strip()
 
         if not post:
-            return render(request, "network/index.html", {
-                "error": "Post cannot be empty."
-            })
+            messages.error(request, "Post cannot be empty.")
+            return redirect("index")
         
         post1 = Post.objects.create(
             post=post,
