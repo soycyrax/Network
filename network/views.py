@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
-from .models import User, Post
+from .models import User, Post, Follow
 
 def index(request):
     posts = Post.objects.filter(is_active=True).order_by('-created_at')
@@ -92,9 +92,38 @@ def profile_page(request, username):
     profile_user = get_object_or_404(User, username=username)
     posts = Post.objects.filter(created_by=profile_user).order_by("-created_at")
 
+    is_following = Follow.objects.filter(
+        follower=request.user,
+        followed=profile_user
+    ).exists()
+
     return render(request, "network/profile.html", {
         "profile_user": profile_user,
-        "posts": posts
+        "posts": posts,
+        "is_following": is_following
     })
 
-    
+@login_required
+def follow(request, username):
+    print("*Follow view called*")
+    if request.method == "POST":
+        profile_user = get_object_or_404(User, username=username)
+        users_following = Follow.objects.filter(follower=request.user, followed=profile_user).exists()
+        print(users_following)
+
+        if not users_following:
+            print("Following...")
+            follow = Follow.objects.create(follower=request.user, followed=profile_user)
+            print(follow)
+            print(follow.id)
+            print(Follow.objects.all())
+
+            return redirect("profile", username=username)
+
+        print("Unfollowing...")
+        Follow.objects.filter(follower=request.user, followed=profile_user).delete()
+        print(f"{request.user} unfollowed {profile_user}")
+        print(Follow.id)
+        print(Follow.objects.all())
+
+    return redirect("profile", username=username)
