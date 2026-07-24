@@ -5,8 +5,8 @@
     <div class="container">
         <h1 class="mb-3">{{ profile_user }}</h1>
         <div class="container1">
-            <div><strong>0</strong> Followers</div>
-            <div><strong>0</strong> Following</div>
+            <div><strong>{{ follower_count }}</strong> Followers</div>
+            <div><strong>{{ following_count }}</strong> Following</div>
             {% if request.user != profile_user %}
                 <form action="{% url 'follow' profile_user.username %}" method="post">
                     {% csrf_token %}
@@ -15,6 +15,7 @@
                         <button class="btn btn-outline-primary">Unfollow</button>
                     {% else %}
                         <button class="btn btn-outline-primary">Follow</button>
+                    
                     {% endif %}
                 </form>
             {% endif %}

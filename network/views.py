@@ -97,10 +97,22 @@ def profile_page(request, username):
         followed=profile_user
     ).exists()
 
+    following= Follow.objects.filter(follower=profile_user)
+
+    following_count = following.count()
+
+    followers = Follow.objects.filter(followed=profile_user)
+
+    follower_count = followers.count()
+    print(following)
+    print(followers)
+
     return render(request, "network/profile.html", {
         "profile_user": profile_user,
         "posts": posts,
-        "is_following": is_following
+        "is_following": is_following,
+        "following_count": following_count,
+        "follower_count": follower_count
     })
 
 @login_required
@@ -108,22 +120,20 @@ def follow(request, username):
     print("*Follow view called*")
     if request.method == "POST":
         profile_user = get_object_or_404(User, username=username)
+
+        if request.user == profile_user:
+            return redirect("profile", username=username)
+        
         users_following = Follow.objects.filter(follower=request.user, followed=profile_user).exists()
-        print(users_following)
 
         if not users_following:
             print("Following...")
             follow = Follow.objects.create(follower=request.user, followed=profile_user)
-            print(follow)
-            print(follow.id)
-            print(Follow.objects.all())
-
+            print(f"{follow.follower} followed {follow.followed}")
             return redirect("profile", username=username)
-
+            
         print("Unfollowing...")
         Follow.objects.filter(follower=request.user, followed=profile_user).delete()
         print(f"{request.user} unfollowed {profile_user}")
-        print(Follow.id)
-        print(Follow.objects.all())
 
     return redirect("profile", username=username)
