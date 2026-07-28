@@ -11,7 +11,7 @@ from .models import User, Post, Follow
 
 def index(request):
     posts = Post.objects.filter(is_active=True).order_by('-created_at')
-    
+   
     return render(request, "network/index.html", {
         "posts": posts
     })
@@ -137,3 +137,13 @@ def follow(request, username):
         print(f"{request.user} unfollowed {profile_user}")
 
     return redirect("profile", username=username)
+
+@login_required
+def following_page(request):
+    following = Follow.objects.filter(follower=request.user).values_list("followed", flat=True)
+
+    posts = Post.objects.filter(created_by__in=following).order_by("-created_at")
+
+    return render(request, "network/index.html", {
+            "posts": posts
+        })
