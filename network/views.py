@@ -6,14 +6,25 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.core.paginator import Paginator
 
 from .models import User, Post, Follow
 
 def index(request):
     posts = Post.objects.filter(is_active=True).order_by('-created_at')
-   
+    print(posts.count())
+    paginate = Paginator(posts, 10)
+
+    page_number = request.GET.get("page")
+    print(page_number)
+    page_obj = paginate.get_page(page_number)
+    print(type(page_obj))
+    print(page_obj)
+    a = page_obj.object_list
+    print(a.count())
     return render(request, "network/index.html", {
-        "posts": posts
+        "posts": posts,
+        "page_obj": page_obj
     })
 
 
@@ -104,8 +115,6 @@ def profile_page(request, username):
     followers = Follow.objects.filter(followed=profile_user)
 
     follower_count = followers.count()
-    print(following)
-    print(followers)
 
     return render(request, "network/profile.html", {
         "profile_user": profile_user,
