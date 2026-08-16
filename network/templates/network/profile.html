@@ -7,6 +7,7 @@
         <div class="container1">
             <div><strong>{{ follower_count }}</strong> Followers</div>
             <div><strong>{{ following_count }}</strong> Following</div>
+            {# Hide the follow button on your own profile. #}
             {% if request.user != profile_user %}
                 <form action="{% url 'follow' profile_user.username %}" method="post">
                     {% csrf_token %}
@@ -22,6 +23,7 @@
         </div>
     </div>
 
+    {# List only posts created by the profile owner. #}
     {% for post in posts %}
     <div class="container">
         <h3 class="mb-4">{{ post.created_by }}</h3>

@@ -13,7 +13,12 @@
 }
 
 .container1 {
-    display: flex; /* or display: grid */
-    gap: 8px;     /* Sets 20px of space between all items */
+    display: flex;
+    /* Space out small action groups like Like/Edit and follower counts. */
+    gap: 8px;
+}
+
+.hidden {
+    display: none;
 }
 

@@ -7,6 +7,7 @@ class User(AbstractUser):
     pass
 
 class Post(models.Model):
+    # A single user-created post shown in the feed and profile pages.
     post = models.TextField()
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -21,6 +22,7 @@ class Post(models.Model):
         return self.post
     
 class Follow(models.Model):
+    # One row means "follower" follows "followed".
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
     followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers")
     timestamp = models.DateTimeField(auto_now_add=True)

@@ -7,14 +7,18 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator
+import json
+from django.http import JsonResponse
 
 from .models import User, Post, Follow
 
 def index(request):
+    user = request.user
+
+    # Show newest active posts first, then split the list into pages.
     posts = Post.objects.filter(is_active=True).order_by('-created_at')
     print(posts.count())
     paginate = Paginator(posts, 10)
-
     page_number = request.GET.get("page")
     print(page_number)
     page_obj = paginate.get_page(page_number)
@@ -24,7 +28,8 @@ def index(request):
     print(a.count())
     return render(request, "network/index.html", {
         "posts": posts,
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "user": user
     })
 
 
@@ -83,12 +88,14 @@ def register(request):
 @login_required
 def create_post(request):
     if request.method == "POST":
+        # Trim whitespace so blank posts like "   " are rejected.
         post = request.POST.get("newpost", "").strip()
 
         if not post:
             messages.error(request, "Post cannot be empty.")
             return redirect("index")
         
+        # Store the post under the currently logged-in user.
         post1 = Post.objects.create(
             post=post,
             created_by=request.user
@@ -100,14 +107,17 @@ def create_post(request):
 
 @login_required
 def profile_page(request, username):
+    # Load the profile owner from the username in the URL.
     profile_user = get_object_or_404(User, username=username)
     posts = Post.objects.filter(created_by=profile_user).order_by("-created_at")
 
+    # Used by the template to show either a Follow or Unfollow button.
     is_following = Follow.objects.filter(
         follower=request.user,
         followed=profile_user
     ).exists()
 
+    # Count the profile user's social connections for display.
     following= Follow.objects.filter(follower=profile_user)
 
     following_count = following.count()
@@ -130,11 +140,13 @@ def follow(request, username):
     if request.method == "POST":
         profile_user = get_object_or_404(User, username=username)
 
+        # Users should not be able to follow themselves.
         if request.user == profile_user:
             return redirect("profile", username=username)
         
         users_following = Follow.objects.filter(follower=request.user, followed=profile_user).exists()
 
+        # This view acts like a toggle: create the follow if missing, otherwise remove it.
         if not users_following:
             print("Following...")
             follow = Follow.objects.create(follower=request.user, followed=profile_user)
@@ -149,6 +161,7 @@ def follow(request, username):
 
 @login_required
 def following_page(request):
+    # Get IDs of users the current user follows, then show only those users' posts.
     following = Follow.objects.filter(follower=request.user).values_list("followed", flat=True)
 
     posts = Post.objects.filter(created_by__in=following).order_by("-created_at")
@@ -156,3 +169,28 @@ def following_page(request):
     return render(request, "network/index.html", {
             "posts": posts
         })
+
+@login_required
+def edit_post(request, post_id):
+    user = request.user
+    # Get the specific post
+    post = Post.objects.get(pk=post_id)
+
+    # Make sure the user owns this post
+    if post.created_by != user:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    # Handle the JavaScript POST request
+    if request.method == "POST":
+        # The front end sends the updated post text as JSON in the request body.
+        data = json.loads(request.body)
+
+        post.post = data["content"]
+        post.save()
+        print(post)
+
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"error": "POST request required"}, status=400)
+
+    

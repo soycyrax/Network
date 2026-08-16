@@ -1,5 +1,5 @@
 {% extends "network/layout.html" %}
-
+{% load static %}
 {% block body %}
 
 <div class="p-3">
@@ -28,19 +28,24 @@
 
 
 
+    {# Each post includes data-post-id so index.js can send edits to the right record. #}
     {% for post in page_obj %}
-    <div class="container">
+    <div class="post container" data-post-id="{{ post.id }}">
         <a href="{% url 'profile' post.created_by %}">
             <h3 class="mb-4">{{ post.created_by }}</h3>
         </a>
         <p class="mb-4">{{ post.post }}</p>
         <div class="container1">
             <div>0 Likes <button class="btn btn-sm btn-outline-primary">Like</button></div>
+            {% if post.created_by == user %}
+            <div><button class="edit btn btn-sm btn-outline-primary">Edit</button></div>
+            {% endif %}
         </div>
         <small>{{ post.created_at }}</small>
     </div>
     {% endfor %}
     
+    {# Pagination links use page_obj from Django's Paginator in views.py. #}
     <div class="m-5">
         <span>
         {% if page_obj.number != 1 %}
@@ -66,4 +71,8 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
 {% endblock %}
