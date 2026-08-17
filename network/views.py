@@ -166,8 +166,14 @@ def following_page(request):
 
     posts = Post.objects.filter(created_by__in=following).order_by("-created_at")
 
+    paginate = Paginator(posts, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginate.get_page(page_number)
+
     return render(request, "network/index.html", {
-            "posts": posts
+            "posts": posts,
+            "page_obj": page_obj,
+            "user": request.user
         })
 
 @login_required
