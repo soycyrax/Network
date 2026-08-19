@@ -21,4 +21,8 @@
 .hidden {
     display: none;
 }
-
+.edit-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
