@@ -21,6 +21,9 @@ function getCookie(name) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const post = document.querySelector('.post')
+    console.log(post)  
+
     // Attach edit behavior to every Edit button rendered on the feed.
     document.querySelectorAll('.edit').forEach(button => {
 
@@ -148,12 +151,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.like_exists) {
 
                         likebutton.textContent = 'Unlike'
+                        likeCount.textContent =
+                        Number(likeCount.textContent) + 1;
                     }
                     else {
 
                         likebutton.textContent = 'Like'
+                        likeCount.textContent =
+                        Number(likeCount.textContent) - 1;
                     }
-                    likeCount.textContent = data.like_count;
                 });
               
         });

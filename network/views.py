@@ -9,34 +9,35 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from django.db.models import BooleanField, Count, Exists, OuterRef, Value
+from django.db.models import Count, Exists, OuterRef, Value
 
 from .models import User, Post, Follow, Like
-
-def posts_with_like_status(posts, user):
-    posts = posts.annotate(
-        like_count=Count("liked_post")
-    )
-
-    if user.is_authenticated:
-
-        user_likes = Like.objects.filter(
-            liked_by=user,
-            liked_post=OuterRef("pk")
-        )
-
-        return posts.annotate(is_liked=Exists(user_likes))
-
-    return posts.annotate(is_liked=Value(False, output_field=BooleanField()))
-
 
 def index(request):
     user = request.user
 
-    posts = posts_with_like_status(
-        Post.objects.filter(is_active=True),
-        user
+    posts = Post.objects.filter(
+        is_active=True
+    ).annotate(
+        like_count=Count("liked_post")
     ).order_by("-created_at")
+
+    if request.user.is_authenticated:
+
+        user_likes = Like.objects.filter(
+            liked_by=request.user,
+            liked_post=OuterRef("pk")
+        )
+
+        posts = posts.annotate(
+            is_liked=Exists(user_likes)
+        )
+
+    else:
+
+        posts = posts.annotate(
+            is_liked=Value(False)
+        )
 
     paginate = Paginator(posts, 10)
     page_number = request.GET.get("page")
@@ -126,10 +127,7 @@ def profile_page(request, username):
     # Load the profile owner from the username in the URL.
     user = request.user
     profile_user = get_object_or_404(User, username=username)
-    posts = posts_with_like_status(
-        Post.objects.filter(created_by=profile_user),
-        user
-    ).order_by("-created_at")
+    posts = Post.objects.filter(created_by=profile_user).order_by("-created_at")
 
     # Used by the template to show either a Follow or Unfollow button.
     is_following = Follow.objects.filter(
@@ -185,10 +183,7 @@ def following_page(request):
     # Get IDs of users the current user follows, then show only those users' posts.
     following = Follow.objects.filter(follower=request.user).values_list("followed", flat=True)
 
-    posts = posts_with_like_status(
-        Post.objects.filter(created_by__in=following),
-        request.user
-    ).order_by("-created_at")
+    posts = Post.objects.filter(created_by__in=following).order_by("-created_at")
 
     paginate = Paginator(posts, 10)
     page_number = request.GET.get("page")
@@ -225,16 +220,21 @@ def edit_post(request, post_id):
 
 @login_required
 def like_post(request, post_id):
+    print("*Like view called*")
     if request.method == "POST":
         target_post = get_object_or_404(Post, id=post_id)
         like_exists = Like.objects.filter(liked_by=request.user, liked_post=target_post).exists()
 
         if not like_exists:
-            Like.objects.create(liked_by=request.user, liked_post=target_post)
+            print("Liking...")
+            like = Like.objects.create(liked_by=request.user, liked_post=target_post)
+            print(f"{like.liked_by} likes {like.liked_post.post} by {like.liked_post.created_by}")
             like_exists = True
             
         else:
+            print("Unliking...")
             Like.objects.filter(liked_by=request.user, liked_post=target_post).delete()
+            print(f"{request.user} unliked {target_post.post} by {target_post.created_by}")
             like_exists = False
 
         like_count = Like.objects.filter(liked_post=target_post).count()
