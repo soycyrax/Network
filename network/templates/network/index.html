@@ -34,39 +34,52 @@
         <a href="{% url 'profile' post.created_by %}">
             <h3 class="mb-4">{{ post.created_by }}</h3>
         </a>
+
         <p class="mb-4">{{ post.post }}</p>
+
         <div class="container1">
-            <div>0 Likes <button class="btn btn-sm btn-outline-primary">Like</button></div>
+            <div>
+                <span class="like-count">{{ post.like_count }}</span>
+                <span> Likes</span>
+                {% if post.is_liked %}
+                    <button class="like btn btn-sm btn-outline-primary">Unlike</button>
+                {% else %}
+                    <button class="like btn btn-sm btn-outline-primary">Like</button>
+                {% endif %}
+            </div>
             {% if post.created_by == user %}
-            <div><button class="edit btn btn-sm btn-outline-primary">Edit</button></div>
+            <div>
+                <button class="edit btn btn-sm btn-outline-primary">Edit</button>
+            </div>
             {% endif %}
         </div>
+
         <small>{{ post.created_at }}</small>
     </div>
     {% endfor %}
-    
+
     {# Pagination links use page_obj from Django's Paginator in views.py. #}
-    <div class="m-5">
+    <div class="m-5 p-3">
         <span>
-        {% if page_obj.number != 1 %}
-            <a href="?page=1">First</a>
-        {% endif %}
+            {% if page_obj.number != 1 %}
+            <a href="?page=1"><button class="btn btn-primary">First</button></a>
+            {% endif %}
 
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">Next</a>
-        {% endif %}
-        
-        <span class="current">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-        </span>
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}"><button class="btn btn-primary">Next</button></a>
+            {% endif %}
 
-        {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-        {% endif %}
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
 
-        {% if page_obj.number != page_obj.paginator.num_pages %}
-            <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
-        {% endif %}
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}"><button class="btn btn-primary">Previous</button></a>
+            {% endif %}
+
+            {% if page_obj.number != page_obj.paginator.num_pages %}
+            <a href="?page={{ page_obj.paginator.num_pages }}"><button class="btn btn-primary">Last</button></a>
+            {% endif %}
         </span>
     </div>
 </div>
@@ -74,5 +87,5 @@
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'network/index.js' %}"></script>
+<script src="{% static 'network/index.js' %}"></script>
 {% endblock %}
