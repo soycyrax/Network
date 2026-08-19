@@ -9,43 +9,27 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 import json
 from django.http import JsonResponse
-from django.db.models import BooleanField, Count, Exists, OuterRef, Value
 
-from .models import User, Post, Follow, Like
-
-def posts_with_like_status(posts, user):
-    posts = posts.annotate(
-        like_count=Count("liked_post")
-    )
-
-    if user.is_authenticated:
-
-        user_likes = Like.objects.filter(
-            liked_by=user,
-            liked_post=OuterRef("pk")
-        )
-
-        return posts.annotate(is_liked=Exists(user_likes))
-
-    return posts.annotate(is_liked=Value(False, output_field=BooleanField()))
-
+from .models import User, Post, Follow
 
 def index(request):
     user = request.user
 
-    posts = posts_with_like_status(
-        Post.objects.filter(is_active=True),
-        user
-    ).order_by("-created_at")
-
+    # Show newest active posts first, then split the list into pages.
+    posts = Post.objects.filter(is_active=True).order_by('-created_at')
+    print(posts.count())
     paginate = Paginator(posts, 10)
     page_number = request.GET.get("page")
+    print(page_number)
     page_obj = paginate.get_page(page_number)
-
+    print(type(page_obj))
+    print(page_obj)
+    a = page_obj.object_list
+    print(a.count())
     return render(request, "network/index.html", {
         "posts": posts,
         "page_obj": page_obj,
-        "user": user,
+        "user": user
     })
 
 
@@ -124,12 +108,8 @@ def create_post(request):
 @login_required
 def profile_page(request, username):
     # Load the profile owner from the username in the URL.
-    user = request.user
     profile_user = get_object_or_404(User, username=username)
-    posts = posts_with_like_status(
-        Post.objects.filter(created_by=profile_user),
-        user
-    ).order_by("-created_at")
+    posts = Post.objects.filter(created_by=profile_user).order_by("-created_at")
 
     # Used by the template to show either a Follow or Unfollow button.
     is_following = Follow.objects.filter(
@@ -138,7 +118,7 @@ def profile_page(request, username):
     ).exists()
 
     # Count the profile user's social connections for display.
-    following = Follow.objects.filter(follower=profile_user)
+    following= Follow.objects.filter(follower=profile_user)
 
     following_count = following.count()
 
@@ -151,8 +131,7 @@ def profile_page(request, username):
         "posts": posts,
         "is_following": is_following,
         "following_count": following_count,
-        "follower_count": follower_count,
-        "user": user
+        "follower_count": follower_count
     })
 
 @login_required
@@ -173,10 +152,10 @@ def follow(request, username):
             follow = Follow.objects.create(follower=request.user, followed=profile_user)
             print(f"{follow.follower} followed {follow.followed}")
             return redirect("profile", username=username)
-        else:
-            print("Unfollowing...")
-            Follow.objects.filter(follower=request.user, followed=profile_user).delete()
-            print(f"{request.user} unfollowed {profile_user}")
+            
+        print("Unfollowing...")
+        Follow.objects.filter(follower=request.user, followed=profile_user).delete()
+        print(f"{request.user} unfollowed {profile_user}")
 
     return redirect("profile", username=username)
 
@@ -185,10 +164,7 @@ def following_page(request):
     # Get IDs of users the current user follows, then show only those users' posts.
     following = Follow.objects.filter(follower=request.user).values_list("followed", flat=True)
 
-    posts = posts_with_like_status(
-        Post.objects.filter(created_by__in=following),
-        request.user
-    ).order_by("-created_at")
+    posts = Post.objects.filter(created_by__in=following).order_by("-created_at")
 
     paginate = Paginator(posts, 10)
     page_number = request.GET.get("page")
@@ -218,32 +194,9 @@ def edit_post(request, post_id):
         post.post = data["content"]
         post.save()
         print(post)
-    
+
         return JsonResponse({"success": True})
 
     return JsonResponse({"error": "POST request required"}, status=400)
-
-@login_required
-def like_post(request, post_id):
-    if request.method == "POST":
-        target_post = get_object_or_404(Post, id=post_id)
-        like_exists = Like.objects.filter(liked_by=request.user, liked_post=target_post).exists()
-
-        if not like_exists:
-            Like.objects.create(liked_by=request.user, liked_post=target_post)
-            like_exists = True
-            
-        else:
-            Like.objects.filter(liked_by=request.user, liked_post=target_post).delete()
-            like_exists = False
-
-        like_count = Like.objects.filter(liked_post=target_post).count()
-
-        return JsonResponse({"success": True, "like_exists": like_exists, "like_count": like_count})
-
-    return JsonResponse({"error": "POST request required"}, status=400)
-
-
-
 
     
